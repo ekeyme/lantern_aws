@@ -1,0 +1,4 @@
+[lantern_proxy]
+title=Lantern Proxy
+description=Lantern censorship circumvention tool
+ports=62000,62443/tcp

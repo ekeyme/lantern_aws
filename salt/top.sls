@@ -38,10 +38,10 @@ base:
         - borda
     'ops-panel':
         - lantern_build_prereqs
-        - proxy_ufw_rules
+        - default_ufw_rules
     'cs-*':
         - lantern_build_prereqs
-        - proxy_ufw_rules
+        - default_ufw_rules
         - stunnel4
         - config_server
     'redis-*':
