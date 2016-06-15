@@ -94,6 +94,30 @@ disable-redis-server-sysv:
     - group: root
     - mode: 644
 
+# Allow memory overcommit to make sure Redis background save still works even in
+# low memory conditions.
+vm.overcommit_memory:
+  sysctl.present:
+    - value: 1
+
+# Increase somaxconn for Redis
+net.core.somaxconn:
+  sysctl.present:
+    - value: 1024
+
+# Disable THP for Redis's benefit. This is done permanently in rc.local
+disable-THP:
+  file.replace:
+    - name: /sys/kernel/mm/transparent_hugepage/enabled
+    - pattern: .*
+    - repl: never
+    - backup: False
+
+/etc/rc.local:
+  file.managed:
+    - source: salt://redis_server/rc.local
+    - mode: 755
+
 redis-server-running:
   service.running:
     - name: redis-server
@@ -105,6 +129,9 @@ redis-server-running:
     - watch:
         - file: /etc/redis/*
         - file: /etc/init/redis-server.conf
+        - file: /etc/rc.local
+        - sysctl: vm.overcommit_memory
+        - sysctl: net.core.somaxconn
         - cmd: stunnel4-deps
 
 {% if not pillar["in_dev"] and pillar.get("is_redis_master", False) %}
