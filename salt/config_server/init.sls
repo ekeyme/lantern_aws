@@ -31,9 +31,9 @@ cfgsrv-env-port:
     - pattern: "^PORT=.+$"
     - repl: PORT=62000
 
-/etc/init/tlsproxy_client.conf:
+/etc/init/tlsproxy-client.conf:
   file.managed:
-    - source: salt://config_server/tlsproxy_client.conf
+    - source: salt://config_server/tlsproxy-client.conf
     - template: jinja
     - context:
         redis_host: {{ pillar['redis_host'] }}
@@ -57,14 +57,21 @@ cfgsrv-env-port:
     - mode: 644
     - template: jinja
 
+tlsproxy-client:
+  service.running:
+    - enable: yes
+    - require:
+      - file: /home/lantern/tlsproxy
+    - watch:
+      - file: /etc/init/tlsproxy-client.conf
+
 config-server:
   service.running:
     - order: last
     - enable: yes
     - require:
-       - service: stunnel4
+       - service: tlsproxy-client
     - watch:
        - file: /home/lantern/config-server.jar
        - file: /etc/init/config-server.conf
        - file: /etc/environment
-       - cmd: stunnel4-deps
