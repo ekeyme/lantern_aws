@@ -42,8 +42,8 @@ base:
     'cs-*':
         - lantern_build_prereqs
         - default_ufw_rules
-        - stunnel4
+        - tlsproxy
         - config_server
     'redis-*':
-        - stunnel4
+        - tlsproxy
         - redis_server

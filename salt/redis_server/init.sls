@@ -1,6 +1,6 @@
-/etc/stunnel/stunnel_server.conf:
+/etc/init/tlsproxy-server.conf:
   file.managed:
-    - source: salt://redis_server/stunnel_server.conf
+    - source: salt://redis_server/tlsproxy-server.conf
     - template: jinja
     - context:
         redis_host: {{ pillar['redis_host'] }}
@@ -10,7 +10,21 @@
     - mode: 644
     - makedirs: True
     - require:
-      - pkg: stunnel4
+      - file: /home/lantern/tlsproxy
+
+/etc/init/tlsproxy-client.conf:
+  file.managed:
+    - source: salt://redis_server/tlsproxy-client.conf
+    - template: jinja
+    - context:
+        redis_host: {{ pillar['redis_host'] }}
+        redis_domain: {{ pillar['redis_domain'] }}
+    - user: root
+    - group: root
+    - mode: 644
+    - makedirs: True
+    - require:
+      - file: /home/lantern/tlsproxy
 
 /etc/redis/redis_auth.conf:
   file.managed:
@@ -118,21 +132,38 @@ disable-THP:
     - source: salt://redis_server/rc.local
     - mode: 755
 
+tlsproxy-server:
+  service.running:
+    - name: tlsproxy-server
+    - enable: yes
+    - require:
+      - file: /home/lantern/tlsproxy
+    - watch:
+      - file: /etc/init/tlsproxy-server.conf
+
+tlsproxy-client:
+  service.running:
+    - enable: yes
+    - require:
+      - file: /home/lantern/tlsproxy
+    - watch:
+      - file: /etc/init/tlsproxy-client.conf
+
 redis-server-running:
   service.running:
     - name: redis-server
     - enable: yes
     - require:
-        - pkg: stunnel4
         - pkg: redis-server
         - cmd: disable-redis-server-sysv
+        - service: tlsproxy-server
+        - service: tlsproxy-client
     - watch:
         - file: /etc/redis/*
         - file: /etc/init/redis-server.conf
         - file: /etc/rc.local
         - sysctl: vm.overcommit_memory
         - sysctl: net.core.somaxconn
-        - cmd: stunnel4-deps
 
 {% if not pillar["in_dev"] and pillar.get("is_redis_master", False) %}
 s3cmd:
